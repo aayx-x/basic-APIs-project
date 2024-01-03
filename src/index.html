@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Manager</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    div {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    li button {
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    li button.move-to-active {
+      background-color: #2196F3;
+    }
+
+    li button:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  <h1>Project Manager</h1>
+
+  <div>
+    <h2>Create Project</h2>
+    <form id="createProjectForm">
+      <label for="projectName">Project Name:</label>
+      <input type="text" id="projectName" required><br>
+
+      <label for="description">Description:</label>
+      <textarea id="description" required></textarea><br>
+
+      <label for="people">People:</label>
+      <input type="text" id="people" required><br>
+
+      <button type="submit">Create Project</button>
+    </form>
+  </div>
+
+  <div>
+    <h2>Active Projects</h2>
+    <ul id="activeProjectsList"></ul>
+  </div>
+
+  <div>
+    <h2>Finished Projects</h2>
+    <ul id="finishedProjectsList"></ul>
+  </div>
+
+  <script>
+    const createProjectForm = document.getElementById('createProjectForm');
+    const activeProjectsList = document.getElementById('activeProjectsList');
+    const finishedProjectsList = document.getElementById('finishedProjectsList');
+
+    createProjectForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const projectName = document.getElementById('projectName').value;
+      const description = document.getElementById('description').value;
+      const people = document.getElementById('people').value;
+
+      fetch('/create-project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `projectName=${projectName}&description=${description}&people=${people}`,
+      })
+      .then(response => response.text())
+      .then(message => {
+        alert(message);
+        loadProjects();
+      });
+    });
+
+    function moveToFinished(index) {
+      fetch('/move-to-finished', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `index=${index}`,
+      })
+      .then(response => response.text())
+      .then(message => {
+        alert(message);
+        loadProjects();
+      });
+    }
+
+    function moveToActive(index) {
+      fetch('/move-to-active', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `index=${index}`,
+      })
+      .then(response => response.text())
+      .then(message => {
+        alert(message);
+        loadProjects();
+      });
+    }
+
+    function loadProjects() {
+      fetch('/active-projects')
+      .then(response => response.json())
+      .then(projects => {
+        activeProjectsList.innerHTML = projects.map((project, index) => `
+          <li>${project.projectName} - ${project.description} - ${project.people}
+            <button onclick="moveToFinished(${index})">Move to Finished</button>
+          </li>
+        `).join('');
+      });
+
+      fetch('/finished-projects')
+      .then(response => response.json())
+      .then(projects => {
+        finishedProjectsList.innerHTML = projects.map((project, index) => `
+          <li>${project.projectName} - ${project.description} - ${project.people}
+            <button class="move-to-active" onclick="moveToActive(${index})">Move to Active</button>
+          </li>
+        `).join('');
+      });
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>
